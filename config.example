@@ -1,0 +1,14 @@
+# macos-hotkeys configuration
+# Format: KEY=PATH_TO_APP
+#
+# Supported keys: F1-F12
+# Mapped keys are swallowed (not forwarded to apps).
+# Unmapped keys pass through normally.
+#
+# Reload config without restarting:
+#   kill -HUP $(pgrep macos-hotkeys)
+
+F1=/Applications/iTerm.app
+F2=/Applications/IntelliJ IDEA.app
+F3=/Applications/Google Chrome.app
+F4=/Applications/Visual Studio Code.app
