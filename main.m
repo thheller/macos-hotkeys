@@ -155,15 +155,37 @@ static void cycle_windows(pid_t pid) {
         return;
     }
 
-    // collect non-minimized windows
+    // collect non-minimized windows on the main display
+    CGRect mainBounds = CGDisplayBounds(CGMainDisplayID());
     CFMutableArrayRef visible = CFArrayCreateMutable(NULL, 0, &kCFTypeArrayCallBacks);
     for (CFIndex i = 0; i < CFArrayGetCount(windows); i++) {
         AXUIElementRef win = (AXUIElementRef)CFArrayGetValueAtIndex(windows, i);
+
         CFBooleanRef minimized = NULL;
         AXUIElementCopyAttributeValue(win, kAXMinimizedAttribute, (CFTypeRef *)&minimized);
         BOOL isMin = (minimized == kCFBooleanTrue);
         if (minimized) CFRelease(minimized);
-        if (!isMin) CFArrayAppendValue(visible, win);
+        if (isMin) continue;
+
+        // filter to windows whose center lies on the main display
+        AXValueRef posVal = NULL, sizeVal = NULL;
+        if (AXUIElementCopyAttributeValue(win, kAXPositionAttribute, (CFTypeRef *)&posVal) != kAXErrorSuccess || !posVal)
+            continue;
+        if (AXUIElementCopyAttributeValue(win, kAXSizeAttribute, (CFTypeRef *)&sizeVal) != kAXErrorSuccess || !sizeVal) {
+            CFRelease(posVal);
+            continue;
+        }
+        CGPoint pos = CGPointZero;
+        CGSize sz = CGSizeZero;
+        AXValueGetValue((AXValueRef)posVal, kAXValueCGPointType, &pos);
+        AXValueGetValue((AXValueRef)sizeVal, kAXValueCGSizeType, &sz);
+        CFRelease(posVal);
+        CFRelease(sizeVal);
+
+        CGPoint center = CGPointMake(pos.x + sz.width / 2.0, pos.y + sz.height / 2.0);
+        if (!CGRectContainsPoint(mainBounds, center)) continue;
+
+        CFArrayAppendValue(visible, win);
     }
 
     if (CFArrayGetCount(visible) > 1) {

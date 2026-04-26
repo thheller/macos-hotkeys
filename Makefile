@@ -10,6 +10,7 @@ all: $(TARGET)
 
 $(TARGET): main.m
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
+	codesign -s - --force $@
 
 install: $(TARGET)
 	install -d $(PREFIX)/bin
